@@ -401,14 +401,31 @@ def manual_drive():
             CAR_L, CAR_W = cars.p.length, cars.p.width
             for k in range(n_cars):
                 cs, sn = np.cos(cars.psi[k]), np.sin(cars.psi[k])
-                l = np.array([1, 1, -1, -1]) * CAR_L / 2
-                w = np.array([1, -1, -1, 1]) * CAR_W / 2
-                cx = cars.x[k] + l * cs - w * sn
-                cy = cars.y[k] + l * sn + w * cs
-                pts = cam.tf(np.stack([cx, cy], -1))
                 
+                def local_to_global(lx, ly):
+                    gx = cars.x[k] + lx * cs - ly * sn
+                    gy = cars.y[k] + lx * sn + ly * cs
+                    return cam.tf(np.stack([gx, gy], -1))
+                
+                # Main body
+                pts = local_to_global(np.array([1, 1, -1, -1]) * CAR_L / 2, np.array([1, -1, -1, 1]) * CAR_W / 2)
                 pygame.draw.polygon(screen, colors[k], pts)
                 pygame.draw.polygon(screen, (0, 0, 0), pts, 3)
+                
+                # Windshield
+                w_pts = local_to_global(np.array([0.4, 0.4, -0.1, -0.1]) * CAR_L / 2, np.array([0.8, -0.8, -0.8, 0.8]) * CAR_W / 2)
+                pygame.draw.polygon(screen, (20, 20, 30), w_pts)
+                
+                # Roof
+                r_pts = local_to_global(np.array([0.0, 0.0, -0.6, -0.6]) * CAR_L / 2, np.array([0.7, -0.7, -0.7, 0.7]) * CAR_W / 2)
+                pygame.draw.polygon(screen, colors[k], r_pts)
+                pygame.draw.polygon(screen, (0, 0, 0), r_pts, 2)
+                
+                # Headlights
+                h1 = local_to_global(np.array([0.9, 1.0, 1.0, 0.9]) * CAR_L / 2, np.array([0.9, 0.9, 0.5, 0.5]) * CAR_W / 2)
+                h2 = local_to_global(np.array([0.9, 1.0, 1.0, 0.9]) * CAR_L / 2, np.array([-0.5, -0.5, -0.9, -0.9]) * CAR_W / 2)
+                pygame.draw.polygon(screen, (255, 255, 150), h1)
+                pygame.draw.polygon(screen, (255, 255, 150), h2)
                 
             # Info HUD
             def get_lap_text(k):
